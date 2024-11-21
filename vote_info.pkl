@@ -1,0 +1,18 @@
+import pandas as pd
+import pickle
+
+# Example movie ratings data (this should come from real ratings data)
+vote_data = {
+    'id': [1, 2, 3],
+    'vote_average': [8.7, 9.0, 9.1],
+    'vote_count': [5000, 6000, 7000],
+}
+
+# Convert to DataFrame
+vote_df = pd.DataFrame(vote_data)
+
+# Pickle the DataFrame
+with open('vote_info.pkl', 'wb') as file:
+    pickle.dump(vote_df, file)
+
+print("vote_info.pkl generated successfully.")
