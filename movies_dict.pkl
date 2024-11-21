@@ -1,0 +1,23 @@
+import pandas as pd
+import pickle
+
+# Example movie data (this should come from a real dataset, or you can use an API like TMDb)
+movies_data = {
+    'movie_id': [1, 2, 3],
+    'title': ['The Matrix', 'Inception', 'The Dark Knight'],
+    'genres': ['Action, Sci-Fi', 'Action, Sci-Fi', 'Action, Thriller'],
+    'release_date': ['1999-03-31', '2010-07-16', '2008-07-18'],
+    # You can add more fields as necessary
+}
+
+# Convert to DataFrame
+movies_df = pd.DataFrame(movies_data)
+
+# Convert to dictionary
+movies_dict = movies_df.to_dict(orient='records')
+
+# Pickle the dictionary
+with open('movies_dict.pkl', 'wb') as file:
+    pickle.dump(movies_dict, file)
+
+print("movies_dict.pkl generated successfully.")
