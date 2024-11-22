@@ -95,7 +95,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Streamlit App
-st.title("🎬 Content-Based Movie Recommendation System")
+st.title("🎬Movie Recommendation System")
 st.write("Find movies similar to your favorites!")
 
 # Input: Search for a movie by keyword (movie title)
