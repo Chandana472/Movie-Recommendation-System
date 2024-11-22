@@ -34,18 +34,63 @@ def recommend_movies(movie_title, num_recommendations=5):
     return recommended_movies, None
 
 # Streamlit App
-st.title("🎬 Content-Based Movie Recommendation System")
-st.write("Find movies similar to your favorites!")
+st.set_page_config(page_title="🎬 Movie Recommendation", page_icon="🎥", layout="wide")
+st.title("✨ Welcome to Your Personal Movie Recommender 🎬")
+st.markdown("""
+<style>
+body {
+    background-color: #f5f7fa;
+    font-family: Arial, sans-serif;
+}
+div[data-testid="stSidebar"] {
+    background-color: #eef1f6;
+}
+h1 {
+    color: #1f77b4;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# Input: Movie title
-movie_title = st.text_input("Enter a movie title:", "Toy Story (1995)")
-num_recommendations = st.slider("Number of recommendations:", min_value=1, max_value=20, value=5)
+# Sidebar for additional customization
+st.sidebar.title("🔧 Settings")
+st.sidebar.info("Use the sliders and options below to customize your recommendations.")
 
-if st.button("Recommend"):
+# Dropdown with searchable movie titles
+st.subheader("🔎 Search for Your Favorite Movie")
+movie_title = st.selectbox(
+    "Start typing to search and select a movie:",
+    options=movies["title"].tolist(),
+    format_func=lambda x: x,  # Display full titles
+    help="Type a few characters to filter the movie list."
+)
+
+# Slider for number of recommendations
+num_recommendations = st.slider(
+    "🎯 How many recommendations do you want?",
+    min_value=1,
+    max_value=20,
+    value=5,
+    help="Adjust the slider to set the number of movie recommendations."
+)
+
+# Call-to-action button
+st.markdown(
+    "<hr style='border-top: 3px solid #bbb;'/>",
+    unsafe_allow_html=True,
+)
+if st.button("🚀 Get Recommendations"):
     recommendations, error = recommend_movies(movie_title, num_recommendations)
     if error:
-        st.error(error)
+        st.error(f"❌ {error}")
     else:
-        st.write(f"Top {num_recommendations} movies similar to **{movie_title}**:")
+        st.success(f"🎉 Top {num_recommendations} movies similar to **{movie_title}**:")
         for i, movie in enumerate(recommendations, start=1):
-            st.write(f"{i}. {movie}")
+            st.write(f"**{i}. {movie}** 🎥")
+
+# Footer
+st.markdown(
+    """
+    ---
+    💡 Built with ❤️ using [Streamlit](https://streamlit.io)
+    """
+)
