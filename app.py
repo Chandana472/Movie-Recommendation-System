@@ -3,24 +3,28 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the dataset (your original dataset)
-movies = pd.read_csv("data/movies.csv")
+# Load the movies and ratings dataset
+movies = pd.read_csv("data/movies.csv")  # Movie information
+ratings = pd.read_csv("data/ratings.csv")  # Ratings information
+
+# Merge movies and ratings datasets on movieId
+movies_with_ratings = pd.merge(movies, ratings.groupby("movieId")["rating"].mean().reset_index(), on="movieId")
 
 # Preprocessing: Combine all genres into a single string for each movie
-movies["combined_features"] = movies["genres"].fillna("")
+movies_with_ratings["combined_features"] = movies_with_ratings["genres"].fillna("")
 
-# Compute the cosine similarity matrix
+# Compute the cosine similarity matrix based on genres
 vectorizer = CountVectorizer(tokenizer=lambda x: x.split('|'))
-feature_matrix = vectorizer.fit_transform(movies["combined_features"])
+feature_matrix = vectorizer.fit_transform(movies_with_ratings["combined_features"])
 cosine_sim = cosine_similarity(feature_matrix)
 
-# Function to recommend movies
+# Function to recommend movies based on a selected movie title
 def recommend_movies(movie_title, num_recommendations=5):
-    if movie_title not in movies["title"].values:
+    if movie_title not in movies_with_ratings["title"].values:
         return None, f"Movie '{movie_title}' not found in the dataset."
 
     # Get the index of the movie
-    idx = movies[movies["title"] == movie_title].index[0]
+    idx = movies_with_ratings[movies_with_ratings["title"] == movie_title].index[0]
 
     # Get similarity scores for the movie
     sim_scores = list(enumerate(cosine_sim[idx]))
@@ -29,11 +33,11 @@ def recommend_movies(movie_title, num_recommendations=5):
     # Get top recommendations (excluding the movie itself)
     sim_scores = sim_scores[1:num_recommendations + 1]
     recommended_indices = [score[0] for score in sim_scores]
-    recommended_movies = movies.iloc[recommended_indices]
+    recommended_movies = movies_with_ratings.iloc[recommended_indices]
 
     return recommended_movies, None
 
-# Custom CSS for the UI
+# Custom CSS for UI
 st.markdown("""
     <style>
         .header {
@@ -119,13 +123,13 @@ selected_genre = st.selectbox("Filter by Genre (Optional):", ["All"] + genres)
 # Filter movies based on the keyword or genre
 if search_keyword:
     # Filter movies that contain the keyword in their title (case insensitive)
-    filtered_movies = movies[movies["title"].str.contains(search_keyword, case=False, na=False)]
+    filtered_movies = movies_with_ratings[movies_with_ratings["title"].str.contains(search_keyword, case=False, na=False)]
 elif selected_genre != "All":
     # Filter movies based on the selected genre
-    filtered_movies = movies[movies["genres"].str.contains(selected_genre, case=False)]
+    filtered_movies = movies_with_ratings[movies_with_ratings["genres"].str.contains(selected_genre, case=False)]
 else:
     # Show all movies if no filter is applied
-    filtered_movies = movies
+    filtered_movies = movies_with_ratings
 
 # If no movies match, show an error message
 if filtered_movies.empty:
@@ -152,6 +156,6 @@ else:
                 st.markdown(f"""
                     <div class="recommendation-card">
                         <div class="recommendation-title">{movie.title}</div>
-                        <div class="recommendation-rating">Rating: {movie.rating}</div>
+                        <div class="recommendation-rating">Rating: {movie.rating:.1f}</div>
                     </div>
                 """, unsafe_allow_html=True)
