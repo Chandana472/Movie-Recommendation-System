@@ -7,9 +7,12 @@ Get Movie Recommendations based on a selected movie.
 Display Ratings for recommended movies.
 Tech Stack:
 Python | Streamlit | Pandas | scikit-learn
+
+
 Dataset:
 movies.csv: Movie data (ID, title, genres).
 ratings.csv: Movie ratings data.
+
 Usage:
 Search for a movie by title.
 Optionally, filter by genre.
