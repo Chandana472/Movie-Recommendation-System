@@ -48,51 +48,41 @@ st.markdown("""
             font-size: 30px;
             font-weight: bold;
         }
-        .subheader {
-            color: #00aaff;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .recommendation-card {
+        .movie-card {
             background-color: #212121;
             color: white;
             border-radius: 10px;
             padding: 20px;
             margin: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            display: inline-block;
-            width: 230px;
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .recommendation-card:hover {
+        .movie-card:hover {
             transform: scale(1.05);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
-        .recommendation-title {
+        .movie-title {
             color: #FFD700;
             font-size: 18px;
             font-weight: bold;
         }
-        .recommendation-rating {
+        .movie-rating {
             color: #FF6347;
             font-size: 16px;
-            font-weight: bold;
         }
-        .recommendation-button {
-            background-color: #FF6347;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s ease;
+        .movie-image {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
         }
-        .recommendation-button:hover {
-            background-color: #FF4500;
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
-        .movie-title-input {
+        .search-bar {
             background-color: #2e3a59;
             color: white;
             padding: 10px;
@@ -101,15 +91,11 @@ st.markdown("""
             width: 100%;
             font-size: 16px;
         }
-        .slider {
-            background-color: #1F2A44;
-            color: white;
-        }
     </style>
 """, unsafe_allow_html=True)
 
 # Streamlit App
-st.title("🎬Movie Recommendation System")
+st.title("🎬 Content-Based Movie Recommendation System")
 st.write("Find movies similar to your favorites!")
 
 # Input: Search for a movie by keyword (movie title)
@@ -150,12 +136,17 @@ else:
             st.error(error)
         else:
             st.write(f"### Top {num_recommendations} movies similar to **{movie_title}**:")
-            
-            # Display recommendations in a creative card layout
+
+            # Display recommendations in a grid layout
+            cols = st.columns(5)
+            movie_count = 0
             for i, movie in enumerate(recommendations.itertuples(), start=1):
-                st.markdown(f"""
-                    <div class="recommendation-card">
-                        <div class="recommendation-title">{movie.title}</div>
-                        <div class="recommendation-rating">Rating: {movie.rating:.1f}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                col = cols[movie_count % 5]
+                with col:
+                    st.markdown(f"""
+                        <div class="movie-card">
+                            <div class="movie-title">{movie.title}</div>
+                            <div class="movie-rating">Rating: {movie.rating:.1f}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                movie_count += 1
