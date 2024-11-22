@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # TMDb API key (replace with your actual API key)
-api_key = "1bcd8a0fc0c4a007cb11725f2a2c6db3"
+api_key = "your_tmdb_api_key"
 
 # Function to fetch poster URL using TMDb API
 def fetch_poster(movie_title):
@@ -70,6 +70,15 @@ if search_keyword:
     if filtered_movies.empty:
         st.error(f"No movies found for '{search_keyword}'. Try different keywords.")
     else:
+        # Genre Filter
+        genres = set([genre for sublist in filtered_movies["genres"].str.split("|") for genre in sublist])
+        genres = sorted(genres)
+        selected_genre = st.selectbox("Filter by Genre:", ["All"] + genres)
+
+        # Apply genre filter if selected
+        if selected_genre != "All":
+            filtered_movies = filtered_movies[filtered_movies["genres"].str.contains(selected_genre, case=False)]
+
         # Create a dropdown menu with movie options
         movie_title = st.selectbox("Select a movie:", filtered_movies["title"])
 
@@ -83,10 +92,11 @@ if search_keyword:
             else:
                 st.write(f"Top {num_recommendations} movies similar to **{movie_title}**:")
 
-                # Display recommendations with posters
-                cols = st.columns(num_recommendations)  # Create columns to display posters horizontally
+                # Display recommendations with posters in a grid layout
+                num_cols = min(num_recommendations, 5)  # Limit number of columns to 5 for grid layout
+                cols = st.columns(num_cols)  # Create columns to display posters horizontally
                 for i, movie in enumerate(recommendations.itertuples()):
-                    with cols[i]:
+                    with cols[i % num_cols]:  # Distribute movies across columns
                         poster_url = fetch_poster(movie.title)  # Fetch poster URL for the movie
                         if poster_url:
                             st.image(poster_url, use_column_width=True)  # Display movie poster
