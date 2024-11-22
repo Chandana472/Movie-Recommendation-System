@@ -1,28 +1,7 @@
 import streamlit as st
 import pandas as pd
-import requests
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-# TMDb API key (replace with your actual API key)
-api_key = "your_tmdb_api_key"
-
-# Function to fetch poster URL using TMDb API
-def fetch_poster(movie_title):
-    # Format the movie title for the API request
-    formatted_title = "+".join(movie_title.split())
-
-    # Make a request to TMDb search API to get the movie details by title
-    search_url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={formatted_title}"
-    response = requests.get(search_url)
-    
-    if response.status_code == 200:
-        data = response.json()
-        if data['results']:
-            poster_path = data['results'][0].get('poster_path')  # Get the poster path of the first result
-            if poster_path:
-                return "https://image.tmdb.org/t/p/w500/" + poster_path  # Full poster URL
-    return None  # Return None if no poster found
 
 # Load the dataset (your original dataset)
 movies = pd.read_csv("data/movies.csv")
@@ -92,15 +71,8 @@ if search_keyword:
             else:
                 st.write(f"Top {num_recommendations} movies similar to **{movie_title}**:")
 
-                # Display recommendations with posters in a grid layout
-                num_cols = min(num_recommendations, 5)  # Limit number of columns to 5 for grid layout
-                cols = st.columns(num_cols)  # Create columns to display posters horizontally
-                for i, movie in enumerate(recommendations.itertuples()):
-                    with cols[i % num_cols]:  # Distribute movies across columns
-                        poster_url = fetch_poster(movie.title)  # Fetch poster URL for the movie
-                        if poster_url:
-                            st.image(poster_url, use_column_width=True)  # Display movie poster
-                        st.markdown(f"**{movie.title}**")  # Display movie title
-                        st.write(f"Genres: {movie.genres}")  # Display genres
+                # Display recommendations in a simple list format (only movie titles)
+                for i, movie in enumerate(recommendations.itertuples(), start=1):
+                    st.write(f"{i}. **{movie.title}**")
 else:
     st.write("Start by typing a movie title or a keyword to search for movies.")
