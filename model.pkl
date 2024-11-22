@@ -1,0 +1,19 @@
+import pickle
+from sklearn.neighbors import NearestNeighbors
+import pandas as pd
+
+# Load your CSR matrix from the pickle file
+with open('csr_data_tf.pkl', 'rb') as file:
+    csr_matrix = pickle.load(file)
+
+# Initialize the model
+model = NearestNeighbors(metric='cosine', algorithm='brute')
+
+# Train the model
+model.fit(csr_matrix)
+
+# Pickle the trained model
+with open('model.pkl', 'wb') as file:
+    pickle.dump(model, file)
+
+print("model.pkl generated successfully.")
