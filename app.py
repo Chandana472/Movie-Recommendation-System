@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
+import requests
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the dataset
 movies = pd.read_csv("data/movies.csv")
+
+# TMDb API setup
+TMDB_API_KEY = "your_tmdb_api_key"  # Replace with your API key
+TMDB_BASE_URL = "https://api.themoviedb.org/3"
+TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 
 # Preprocessing: Combine all genres into a single string for each movie
 movies["combined_features"] = movies["genres"].fillna("")
@@ -13,6 +19,23 @@ movies["combined_features"] = movies["genres"].fillna("")
 vectorizer = CountVectorizer(tokenizer=lambda x: x.split('|'))
 feature_matrix = vectorizer.fit_transform(movies["combined_features"])
 cosine_sim = cosine_similarity(feature_matrix)
+
+# Function to fetch movie poster
+def fetch_movie_poster(movie_title):
+    """Fetch the poster URL for a movie using the TMDb API."""
+    url = f"{TMDB_BASE_URL}/search/movie"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "query": movie_title,
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        results = response.json().get("results", [])
+        if results:
+            poster_path = results[0].get("poster_path")
+            if poster_path:
+                return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
+    return None
 
 # Function to recommend movies
 def recommend_movies(movie_title, num_recommendations=5):
@@ -36,48 +59,18 @@ def recommend_movies(movie_title, num_recommendations=5):
 # Streamlit App
 st.set_page_config(page_title="🎬 Movie Recommendation", page_icon="🎥", layout="wide")
 st.title("✨ Welcome to Your Personal Movie Recommender 🎬")
-st.markdown("""
-<style>
-body {
-    background-color: #f5f7fa;
-    font-family: Arial, sans-serif;
-}
-div[data-testid="stSidebar"] {
-    background-color: #eef1f6;
-}
-h1 {
-    color: #1f77b4;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Sidebar for additional customization
-st.sidebar.title("🔧 Settings")
-st.sidebar.info("Use the sliders and options below to customize your recommendations.")
 
 # Dropdown with searchable movie titles
 st.subheader("🔎 Search for Your Favorite Movie")
 movie_title = st.selectbox(
     "Start typing to search and select a movie:",
     options=movies["title"].tolist(),
-    format_func=lambda x: x,  # Display full titles
-    help="Type a few characters to filter the movie list."
 )
 
 # Slider for number of recommendations
-num_recommendations = st.slider(
-    "🎯 How many recommendations do you want?",
-    min_value=1,
-    max_value=20,
-    value=5,
-    help="Adjust the slider to set the number of movie recommendations."
-)
+num_recommendations = st.slider("🎯 How many recommendations do you want?", min_value=1, max_value=20, value=5)
 
-# Call-to-action button
-st.markdown(
-    "<hr style='border-top: 3px solid #bbb;'/>",
-    unsafe_allow_html=True,
-)
+# Recommend button logic
 if st.button("🚀 Get Recommendations"):
     recommendations, error = recommend_movies(movie_title, num_recommendations)
     if error:
@@ -85,12 +78,8 @@ if st.button("🚀 Get Recommendations"):
     else:
         st.success(f"🎉 Top {num_recommendations} movies similar to **{movie_title}**:")
         for i, movie in enumerate(recommendations, start=1):
-            st.write(f"**{i}. {movie}** 🎥")
-
-# Footer
-st.markdown(
-    """
-    ---
-    💡 Built with ❤️ using [Streamlit](https://streamlit.io)
-    """
-)
+            poster_url = fetch_movie_poster(movie)
+            if poster_url:
+                st.image(poster_url, width=150, caption=f"{i}. {movie}")
+            else:
+                st.write(f"**{i}. {movie}** 🎥 (Poster not available)")
