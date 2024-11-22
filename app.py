@@ -4,13 +4,28 @@ import requests
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the dataset
-movies = pd.read_csv("data/movies.csv")
+# TMDb API key (replace with your actual API key)
+api_key = "1bcd8a0fc0c4a007cb11725f2a2c6db3"
 
-# TMDb API setup
-TMDB_API_KEY = "your_tmdb_api_key"  # Replace with your API key
-TMDB_BASE_URL = "https://api.themoviedb.org/3"
-TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
+# Function to fetch poster URL using TMDb API
+def fetch_poster(movie_title):
+    # Format the movie title for the API request
+    formatted_title = "+".join(movie_title.split())
+
+    # Make a request to TMDb search API to get the movie details by title
+    search_url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={formatted_title}"
+    response = requests.get(search_url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data['results']:
+            poster_path = data['results'][0].get('poster_path')  # Get the poster path of the first result
+            if poster_path:
+                return "https://image.tmdb.org/t/p/w500/" + poster_path  # Full poster URL
+    return None  # Return None if no poster found
+
+# Load the dataset (your original dataset)
+movies = pd.read_csv("data/movies.csv")
 
 # Preprocessing: Combine all genres into a single string for each movie
 movies["combined_features"] = movies["genres"].fillna("")
@@ -19,23 +34,6 @@ movies["combined_features"] = movies["genres"].fillna("")
 vectorizer = CountVectorizer(tokenizer=lambda x: x.split('|'))
 feature_matrix = vectorizer.fit_transform(movies["combined_features"])
 cosine_sim = cosine_similarity(feature_matrix)
-
-# Function to fetch movie poster
-def fetch_movie_poster(movie_title):
-    """Fetch the poster URL for a movie using the TMDb API."""
-    url = f"{TMDB_BASE_URL}/search/movie"
-    params = {
-        "api_key": TMDB_API_KEY,
-        "query": movie_title,
-    }
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        results = response.json().get("results", [])
-        if results:
-            poster_path = results[0].get("poster_path")
-            if poster_path:
-                return f"{TMDB_IMAGE_BASE_URL}{poster_path}"
-    return None
 
 # Function to recommend movies
 def recommend_movies(movie_title, num_recommendations=5):
@@ -52,34 +50,47 @@ def recommend_movies(movie_title, num_recommendations=5):
     # Get top recommendations (excluding the movie itself)
     sim_scores = sim_scores[1:num_recommendations + 1]
     recommended_indices = [score[0] for score in sim_scores]
-    recommended_movies = movies.iloc[recommended_indices]["title"].tolist()
+    recommended_movies = movies.iloc[recommended_indices]
 
     return recommended_movies, None
 
 # Streamlit App
-st.set_page_config(page_title="🎬 Movie Recommendation", page_icon="🎥", layout="wide")
-st.title("✨ Welcome to Your Personal Movie Recommender 🎬")
+st.title("🎬 Content-Based Movie Recommendation System")
+st.write("Find movies similar to your favorites!")
 
-# Dropdown with searchable movie titles
-st.subheader("🔎 Search for Your Favorite Movie")
-movie_title = st.selectbox(
-    "Start typing to search and select a movie:",
-    options=movies["title"].tolist(),
-)
+# Input: Search for a movie title (User can type a keyword)
+search_keyword = st.text_input("Enter a movie keyword to search:", "")
 
-# Slider for number of recommendations
-num_recommendations = st.slider("🎯 How many recommendations do you want?", min_value=1, max_value=20, value=5)
+# Filter movies based on the search keyword
+if search_keyword:
+    # Filter movies that contain the keyword in their title (case insensitive)
+    filtered_movies = movies[movies["title"].str.contains(search_keyword, case=False, na=False)]
 
-# Recommend button logic
-if st.button("🚀 Get Recommendations"):
-    recommendations, error = recommend_movies(movie_title, num_recommendations)
-    if error:
-        st.error(f"❌ {error}")
+    # If no movies match, show an error message
+    if filtered_movies.empty:
+        st.error(f"No movies found for '{search_keyword}'. Try different keywords.")
     else:
-        st.success(f"🎉 Top {num_recommendations} movies similar to **{movie_title}**:")
-        for i, movie in enumerate(recommendations, start=1):
-            poster_url = fetch_movie_poster(movie)
-            if poster_url:
-                st.image(poster_url, width=150, caption=f"{i}. {movie}")
+        # Create a dropdown menu with movie options
+        movie_title = st.selectbox("Select a movie:", filtered_movies["title"])
+
+        # Slider for the number of recommendations
+        num_recommendations = st.slider("Number of recommendations:", min_value=1, max_value=20, value=5)
+
+        if st.button("Recommend"):
+            recommendations, error = recommend_movies(movie_title, num_recommendations)
+            if error:
+                st.error(error)
             else:
-                st.write(f"**{i}. {movie}** 🎥 (Poster not available)")
+                st.write(f"Top {num_recommendations} movies similar to **{movie_title}**:")
+
+                # Display recommendations with posters
+                cols = st.columns(num_recommendations)  # Create columns to display posters horizontally
+                for i, movie in enumerate(recommendations.itertuples()):
+                    with cols[i]:
+                        poster_url = fetch_poster(movie.title)  # Fetch poster URL for the movie
+                        if poster_url:
+                            st.image(poster_url, use_column_width=True)  # Display movie poster
+                        st.markdown(f"**{movie.title}**")  # Display movie title
+                        st.write(f"Genres: {movie.genres}")  # Display genres
+else:
+    st.write("Start by typing a movie title or a keyword to search for movies.")
