@@ -1,52 +1,51 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import pickle
-import requests
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Load data and models
-movies_dict = pickle.load(open("movies_dict.pkl", "rb"))
-movies = pd.DataFrame(movies_dict)
+# Load the dataset
+movies = pd.read_csv("data/movies.csv")
 
-vote_info = pickle.load(open("vote_info.pkl", "rb"))
-vote = pd.DataFrame(vote_info)
+# Preprocessing: Combine all genres into a single string for each movie
+movies["combined_features"] = movies["genres"].fillna("")
 
-with open('csr_data_tf.pkl', 'rb') as file:
-    csr_data = pickle.load(file)
+# Compute the cosine similarity matrix
+vectorizer = CountVectorizer(tokenizer=lambda x: x.split('|'))
+feature_matrix = vectorizer.fit_transform(movies["combined_features"])
+cosine_sim = cosine_similarity(feature_matrix)
 
-model = pickle.load(open("model.pkl", "rb"))
+# Function to recommend movies
+def recommend_movies(movie_title, num_recommendations=5):
+    if movie_title not in movies["title"].values:
+        return None, f"Movie '{movie_title}' not found in the dataset."
 
-def fetch_poster(movie_id):
-    api_key = 'your_tmdb_api_key'
-    response = requests.get(f'https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}')
-    data = response.json()
-    return "https://image.tmdb.org/t/p/w500/" + data["poster_path"]
+    # Get the index of the movie
+    idx = movies[movies["title"] == movie_title].index[0]
 
-def recommend(movie_name):
-    n_movies_to_recommend = 5
-    idx = movies[movies['title'] == movie_name].index[0]
-    distances, indices = model.kneighbors(csr_data[idx], n_neighbors=n_movies_to_recommend + 1)
-    idx = list(indices.squeeze())
-    df = np.take(movies, idx, axis=0)
+    # Get similarity scores for the movie
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-    movies_list = list(df.title[1:])
-    recommend_movies_names = []
-    recommend_posters = []
-    movie_ids = []
-    for i in movies_list:
-        temp_movie_id = (movies[movies.title == i].movie_id).values[0]
-        movie_ids.append(temp_movie_id)
-        recommend_posters.append(fetch_poster(temp_movie_id))
-        recommend_movies_names.append(i)
-    return recommend_movies_names, recommend_posters, movie_ids
+    # Get top recommendations (excluding the movie itself)
+    sim_scores = sim_scores[1:num_recommendations + 1]
+    recommended_indices = [score[0] for score in sim_scores]
+    recommended_movies = movies.iloc[recommended_indices]["title"].tolist()
 
-# Streamlit app
-st.title('MoviesWay - Movie Recommendation System')
+    return recommended_movies, None
 
-selected_movie = st.selectbox('Select a Movie', movies['title'].values)
+# Streamlit App
+st.title("🎬 Content-Based Movie Recommendation System")
+st.write("Find movies similar to your favorites!")
 
-if st.button('Recommend'):
-    st.text("Here are few recommendations:")
-    names, posters, movie_ids = recommend(selected_movie)
-    for name, poster in zip(names, posters):
-        st.image(poster, caption=name, width=200)
+# Input: Movie title
+movie_title = st.text_input("Enter a movie title:", "Toy Story (1995)")
+num_recommendations = st.slider("Number of recommendations:", min_value=1, max_value=20, value=5)
+
+if st.button("Recommend"):
+    recommendations, error = recommend_movies(movie_title, num_recommendations)
+    if error:
+        st.error(error)
+    else:
+        st.write(f"Top {num_recommendations} movies similar to **{movie_title}**:")
+        for i, movie in enumerate(recommendations, start=1):
+            st.write(f"{i}. {movie}")
