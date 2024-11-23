@@ -40,22 +40,13 @@ def recommend_movies(movie_title, num_recommendations=5):
 # Custom CSS for enhanced UI
 st.markdown("""
     <style>
-        /* General styling */
-        body {
-            font-family: 'Arial', sans-serif;
-        }
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
         .movie-card {
             background-color: #1F2A44;
             color: white;
             border-radius: 10px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
+            margin: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -68,7 +59,6 @@ st.markdown("""
             font-weight: bold;
             color: #FFD700;
             margin-bottom: 10px;
-            text-transform: capitalize;
         }
         .movie-rating {
             font-size: 16px;
@@ -78,13 +68,12 @@ st.markdown("""
         .recommend-button {
             background-color: #28527a;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.3s ease;
-            text-decoration: none;
         }
         .recommend-button:hover {
             background-color: #4682B4;
@@ -131,13 +120,15 @@ else:
             st.error(error)
         else:
             st.write(f"### Recommendations for **{movie_title}**:")
-            st.markdown('<div class="movie-grid">', unsafe_allow_html=True)
-            for rec in recommendations.itertuples():
-                st.markdown(f"""
-                <div class="movie-card">
-                    <div class="movie-title">{rec.title}</div>
-                    <div class="movie-rating">Rating: {rec.rating:.1f}</div>
-                    <a class="recommend-button" href="#">View Details</a>
-                </div>
-                """, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            cols_per_row = 5  # Number of columns per row
+            cols = st.columns(cols_per_row)  # Create columns
+            for idx, rec in enumerate(recommendations.itertuples()):
+                col = cols[idx % cols_per_row]
+                with col:
+                    st.markdown(f"""
+                    <div class="movie-card">
+                        <div class="movie-title">{rec.title}</div>
+                        <div class="movie-rating">Rating: {rec.rating:.1f}</div>
+                        <button class="recommend-button">Details</button>
+                    </div>
+                    """, unsafe_allow_html=True)
