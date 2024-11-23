@@ -37,7 +37,7 @@ def recommend_movies(movie_title, num_recommendations=5):
 
     return recommended_movies, None
 
-# Custom CSS for UI
+# Custom CSS for enhanced UI
 st.markdown("""
     <style>
         .header {
@@ -71,10 +71,38 @@ st.markdown("""
             color: #FF6347;
             font-size: 16px;
         }
-        .movie-image {
+        .dropdown {
+            background-color: #2e3a59;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00aaff;
             width: 100%;
-            height: auto;
-            border-radius: 10px;
+            font-size: 16px;
+            transition: box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+        .dropdown:hover {
+            background-color: #3a4a72;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .button {
+            background-color: #1F2A44;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .button:hover {
+            background-color: #28527a;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .button:focus {
+            outline: none;
         }
         .movie-grid {
             display: grid;
@@ -90,63 +118,58 @@ st.markdown("""
             border: 1px solid #00aaff;
             width: 100%;
             font-size: 16px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .search-bar:focus {
+            background-color: #3a4a72;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            outline: none;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # Streamlit App
-st.title("🎬Movie Recommendation System")
+st.title("🎬 Movie Recommendation System")
 st.write("Find movies similar to your favorites!")
 
 # Input: Search for a movie by keyword (movie title)
-search_keyword = st.text_input("Enter a movie keyword to search:", "", key="movie_search", placeholder="E.g., Toy Story")
+search_keyword = st.text_input(
+    "Enter a movie keyword to search:",
+    "",
+    key="movie_search",
+    placeholder="E.g., Toy Story",
+    help="Type a movie keyword to filter options."
+)
 
-# Option 2: Select movies by genre
-genres = set([genre for sublist in movies["genres"].str.split("|") for genre in sublist])
-genres = sorted(genres)
-selected_genre = st.selectbox("Filter by Genre (Optional):", ["All"] + genres)
+# Dropdown for genres
+selected_genre = st.selectbox(
+    "Filter by Genre (Optional):",
+    ["All"] + sorted(set([genre for sublist in movies["genres"].str.split("|") for genre in sublist])),
+    help="Filter movies by specific genre."
+)
 
-# Filter movies based on the keyword or genre
-if search_keyword:
-    # Filter movies that contain the keyword in their title (case insensitive)
-    filtered_movies = movies_with_ratings[movies_with_ratings["title"].str.contains(search_keyword, case=False, na=False)]
-elif selected_genre != "All":
-    # Filter movies based on the selected genre
-    filtered_movies = movies_with_ratings[movies_with_ratings["genres"].str.contains(selected_genre, case=False)]
-else:
-    # Show all movies if no filter is applied
-    filtered_movies = movies_with_ratings
+# Apply a filter
+filtered_movies = movies_with_ratings[
+    (movies_with_ratings["title"].str.contains(search_keyword, case=False, na=False)) & 
+    (movies_with_ratings["genres"].str.contains(selected_genre, case=False, na=False) if selected_genre != "All" else True)
+]
 
-# If no movies match, show an error message
 if filtered_movies.empty:
-    st.error(f"No movies found. Try using a different keyword or genre.")
+    st.error("No movies match your search criteria.")
 else:
-    # Create a dropdown menu with filtered movie options
-    movie_title = st.selectbox("Select a movie:", filtered_movies["title"])
+    movie_title = st.selectbox("Choose a movie:", filtered_movies["title"])
+    num_recommendations = st.slider("How many recommendations?", 1, 10, 5)
 
-    # Slider for the number of recommendations
-    num_recommendations = st.slider("Number of recommendations:", min_value=1, max_value=20, value=5, key="num_recommendations")
-
-    # Button for recommending movies
-    recommend_button = st.button("Get Recommendations", key="recommend_button", help="Click to get similar movie recommendations!")
-
-    if recommend_button:
+    if st.button("Get Recommendations", help="Generate similar movies"):
         recommendations, error = recommend_movies(movie_title, num_recommendations)
         if error:
             st.error(error)
         else:
-            st.write(f"### Top {num_recommendations} movies similar to **{movie_title}**:")
-
-            # Display recommendations in a grid layout
-            cols = st.columns(5)
-            movie_count = 0
-            for i, movie in enumerate(recommendations.itertuples(), start=1):
-                col = cols[movie_count % 5]
-                with col:
-                    st.markdown(f"""
-                        <div class="movie-card">
-                            <div class="movie-title">{movie.title}</div>
-                            <div class="movie-rating">Rating: {movie.rating:.1f}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                movie_count += 1
+            st.write(f"### Recommendations for **{movie_title}**:")
+            for rec in recommendations.itertuples():
+                st.markdown(f"""
+                <div class="movie-card">
+                    <div class="movie-title">{rec.title}</div>
+                    <div class="movie-rating">Rating: {rec.rating:.1f}</div>
+                </div>
+                """, unsafe_allow_html=True)
