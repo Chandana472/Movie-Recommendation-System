@@ -37,9 +37,38 @@ def recommend_movies(movie_title, num_recommendations=5):
 
     return recommended_movies, None
 
-# Custom CSS for enhanced UI
+# Custom CSS for styling
 st.markdown("""
     <style>
+        /* App Title */
+        .title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            background: -webkit-linear-gradient(45deg, #ff6b6b, #fddb92);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        /* Get Recommendations Button */
+        .recommend-btn {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .recommend-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(255, 126, 95, 0.5);
+        }
+
+        /* Movie Cards */
         .movie-card {
             background-color: #1F2A44;
             color: white;
@@ -55,7 +84,7 @@ st.markdown("""
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
         }
         .movie-title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #FFD700;
             margin-bottom: 10px;
@@ -65,25 +94,11 @@ st.markdown("""
             color: #FF6347;
             margin-bottom: 10px;
         }
-        .recommend-button {
-            background-color: #28527a;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-        }
-        .recommend-button:hover {
-            background-color: #4682B4;
-            transform: scale(1.1);
-        }
     </style>
 """, unsafe_allow_html=True)
 
 # Streamlit App
-st.title("🎬 Movie Recommendation System")
+st.markdown('<h1 class="title">🎬 Movie Recommendation System</h1>', unsafe_allow_html=True)
 st.write("Find movies similar to your favorites!")
 
 # Input: Search for a movie by keyword (movie title)
@@ -129,6 +144,5 @@ else:
                     <div class="movie-card">
                         <div class="movie-title">{rec.title}</div>
                         <div class="movie-rating">Rating: {rec.rating:.1f}</div>
-                        <button class="recommend-button">Details</button>
                     </div>
                     """, unsafe_allow_html=True)
