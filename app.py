@@ -40,90 +40,55 @@ def recommend_movies(movie_title, num_recommendations=5):
 # Custom CSS for enhanced UI
 st.markdown("""
     <style>
-        .header {
-            color: white;
-            background-color: #1F2A44;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 30px;
-            font-weight: bold;
+        /* General styling */
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
         .movie-card {
-            background-color: #212121;
+            background-color: #1F2A44;
             color: white;
             border-radius: 10px;
             padding: 20px;
-            margin: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .movie-card:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
         }
         .movie-title {
-            color: #FFD700;
             font-size: 18px;
             font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 10px;
+            text-transform: capitalize;
         }
         .movie-rating {
+            font-size: 16px;
             color: #FF6347;
-            font-size: 16px;
+            margin-bottom: 10px;
         }
-        .dropdown {
-            background-color: #2e3a59;
+        .recommend-button {
+            background-color: #28527a;
             color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #00aaff;
-            width: 100%;
-            font-size: 16px;
-            transition: box-shadow 0.3s ease, background-color 0.3s ease;
-        }
-        .dropdown:hover {
-            background-color: #3a4a72;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .button {
-            background-color: #1F2A44;
-            color: white;
-            padding: 10px 20px;
             font-size: 16px;
             font-weight: bold;
-            border: none;
-            border-radius: 5px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            text-decoration: none;
         }
-        .button:hover {
-            background-color: #28527a;
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        .button:focus {
-            outline: none;
-        }
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .search-bar {
-            background-color: #2e3a59;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #00aaff;
-            width: 100%;
-            font-size: 16px;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        .search-bar:focus {
-            background-color: #3a4a72;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            outline: none;
+        .recommend-button:hover {
+            background-color: #4682B4;
+            transform: scale(1.1);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -166,10 +131,13 @@ else:
             st.error(error)
         else:
             st.write(f"### Recommendations for **{movie_title}**:")
+            st.markdown('<div class="movie-grid">', unsafe_allow_html=True)
             for rec in recommendations.itertuples():
                 st.markdown(f"""
                 <div class="movie-card">
                     <div class="movie-title">{rec.title}</div>
                     <div class="movie-rating">Rating: {rec.rating:.1f}</div>
+                    <a class="recommend-button" href="#">View Details</a>
                 </div>
                 """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
